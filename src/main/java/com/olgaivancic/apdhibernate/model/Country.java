@@ -1,8 +1,10 @@
 package com.olgaivancic.apdhibernate.model;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.Id;
 
+@Entity
 public class Country {
 
     @Id
@@ -12,10 +14,10 @@ public class Country {
     private String name;
 
     @Column
-    float internetUsers;
+    private Float internetUsers;
 
     @Column
-    float adultLiteracyRate;
+    private Float adultLiteracyRate;
 
     // default constructor
     public Country() {}
@@ -43,19 +45,19 @@ public class Country {
         this.name = name;
     }
 
-    public float getInternetUsers() {
+    public Float getInternetUsers() {
         return internetUsers;
     }
 
-    public void setInternetUsers(float internetUsers) {
+    public void setInternetUsers(Float internetUsers) {
         this.internetUsers = internetUsers;
     }
 
-    public float getAdultLiteracyRate() {
+    public Float getAdultLiteracyRate() {
         return adultLiteracyRate;
     }
 
-    public void setAdultLiteracyRate(float adultLiteracyRate) {
+    public void setAdultLiteracyRate(Float adultLiteracyRate) {
         this.adultLiteracyRate = adultLiteracyRate;
     }
 
@@ -72,8 +74,8 @@ public class Country {
     public static class CountryBuilder {
         private String code;
         private String name;
-        float internetUsers;
-        float adultLiteracyRate;
+        Float internetUsers;
+        Float adultLiteracyRate;
 
         public CountryBuilder(String name) {
             this.name = name;
@@ -84,12 +86,12 @@ public class Country {
             return this;
         }
 
-        public CountryBuilder withInternetUsers(float internetUsers) {
+        public CountryBuilder withInternetUsers(Float internetUsers) {
             this.internetUsers = internetUsers;
             return this;
         }
 
-        public CountryBuilder withAdultLiteracyRate(float adultLiteracyRate) {
+        public CountryBuilder withAdultLiteracyRate(Float adultLiteracyRate) {
             this.adultLiteracyRate = adultLiteracyRate;
             return this;
         }

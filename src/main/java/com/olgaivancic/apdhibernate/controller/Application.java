@@ -1,9 +1,16 @@
 package com.olgaivancic.apdhibernate.controller;
 
+import com.olgaivancic.apdhibernate.model.Country;
+import com.olgaivancic.apdhibernate.view.Prompter;
+import com.olgaivancic.apdhibernate.view.ScreenPrinter;
+import org.hibernate.Criteria;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.service.ServiceRegistry;
+
+import java.util.List;
 
 public class Application {
     // Hold a reusable reference to a session factory
@@ -17,5 +24,37 @@ public class Application {
 
     public static void main(String[] args) {
 
+        List<Country> countries = fetchAllCountries();
+
+        countries.forEach(System.out::println);
+
+        Prompter prompter = new Prompter(countries);
+        ScreenPrinter screenPrinter = new ScreenPrinter(countries);
+        Processor processor = new Processor(countries, prompter, screenPrinter);
+        processor.run();
+
+        // TODO: not sure if this is the right place to close the session factory
+        sessionFactory.close();
+
+
+    }
+
+    // TODO: implement this method, return an ArrayList of countries from the database
+    @SuppressWarnings("unchecked")
+    private static List<Country> fetchAllCountries() {
+        // Open session
+        Session session = sessionFactory.openSession();
+
+        // Create criteria
+        Criteria criteria = session.createCriteria(Country.class);
+
+        // Get a list of contact objects according to the criteria object
+        List<Country> countries = criteria.list();
+
+        // Close session
+        session.close();
+
+
+        return countries;
     }
 }
