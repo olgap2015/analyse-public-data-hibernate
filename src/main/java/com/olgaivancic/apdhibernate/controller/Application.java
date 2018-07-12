@@ -26,17 +26,15 @@ public class Application {
 
         List<Country> countries = fetchAllCountries();
 
-        countries.forEach(System.out::println);
+//        countries.forEach(System.out::println);
 
-        Prompter prompter = new Prompter(countries);
         ScreenPrinter screenPrinter = new ScreenPrinter(countries);
-        Processor processor = new Processor(countries, prompter, screenPrinter);
+        Prompter prompter = new Prompter(countries, screenPrinter);
+        Processor processor = new Processor(countries, prompter, screenPrinter, sessionFactory);
         processor.run();
 
         // TODO: not sure if this is the right place to close the session factory
         sessionFactory.close();
-
-
     }
 
     // TODO: implement this method, return an ArrayList of countries from the database
@@ -53,7 +51,6 @@ public class Application {
 
         // Close session
         session.close();
-
 
         return countries;
     }
