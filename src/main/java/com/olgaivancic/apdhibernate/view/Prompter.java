@@ -31,7 +31,7 @@ public class Prompter {
         return choice;
     }
 
-    public String promptForCountry() throws IOException {
+    public String promptForCountry(String action) throws IOException {
         String countryCode = "";
         List<String> listOfCountryCodes = new ArrayList<>();
         countries.forEach(country -> {
@@ -39,11 +39,13 @@ public class Prompter {
         });
         boolean codeMatches;
         do {
-            System.out.println("\nPlease, enter the unique code of the country that you'd like to edit:\n");
+            System.out.println("\nPlease, enter the unique code of the country that " +
+                    "you'd like to " + action + ":\n");
             countryCode = reader.readLine().toUpperCase();
             codeMatches = listOfCountryCodes.contains(countryCode);
             if (codeMatches == false) {
-                System.out.println("\nThe database doesn't contain the code you entered! Please, try again.\n");
+                System.out.println("\nThe database doesn't contain the code you entered! " +
+                        "Please, try again.\n");
             }
         } while (codeMatches == false);
         return countryCode;
@@ -51,10 +53,16 @@ public class Prompter {
 
     public String promptForNewCountryName() throws IOException {
         String newCountryName = "";
+        boolean nameIsTooLong;
         do {
             System.out.println("\nNew country name: ");
             newCountryName = reader.readLine();
-        } while (newCountryName.length() == 0);
+            nameIsTooLong = newCountryName.length() > 32;
+            if (nameIsTooLong) {
+                System.out.println("\nThe country name can't contain more than 32 characters! " +
+                        "Please, try again.\n");
+            }
+        } while (newCountryName.isEmpty() || nameIsTooLong);
         return newCountryName;
     }
 
@@ -77,5 +85,31 @@ public class Prompter {
             }
         } while (newFloatValue < 0.00 || newFloatValue > 100.00);
         return newFloatValue;
+    }
+
+    public String promptForNewCountryCode() throws IOException {
+        String countryCode = "";
+        List<String> listOfCountryCodes = new ArrayList<>();
+        countries.forEach(country -> {
+            listOfCountryCodes.add(country.getCode());
+        });
+        boolean codeExists;
+        boolean codeIsTooLong;
+        boolean codeIsOnlyLetters;
+        do {
+            System.out.println("\nNew country code: ");
+            countryCode = reader.readLine().toUpperCase();
+            codeExists = listOfCountryCodes.contains(countryCode);
+            codeIsTooLong = countryCode.length() > 3;
+            codeIsOnlyLetters = countryCode.matches("[a-zA-Z]+");
+            if (codeIsTooLong || !codeIsOnlyLetters) {
+                System.out.println("\nThe code has to contain 3 letters! Please, try again!\n");
+            }
+            if (codeExists) {
+                System.out.println("\nThe database already contains a country with this code! " +
+                        "Please, try again.\n");
+            }
+        } while (codeIsTooLong || codeExists || countryCode.isEmpty() || !codeIsOnlyLetters);
+        return countryCode;
     }
 }

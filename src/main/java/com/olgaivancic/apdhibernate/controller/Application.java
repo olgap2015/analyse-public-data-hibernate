@@ -1,8 +1,6 @@
 package com.olgaivancic.apdhibernate.controller;
 
 import com.olgaivancic.apdhibernate.model.Country;
-import com.olgaivancic.apdhibernate.view.Prompter;
-import com.olgaivancic.apdhibernate.view.ScreenPrinter;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -24,35 +22,30 @@ public class Application {
 
     public static void main(String[] args) {
 
-        List<Country> countries = fetchAllCountries();
-
-//        countries.forEach(System.out::println);
-
-        ScreenPrinter screenPrinter = new ScreenPrinter(countries);
-        Prompter prompter = new Prompter(countries, screenPrinter);
-        Processor processor = new Processor(countries, prompter, screenPrinter, sessionFactory);
+//        List<Country> countries = fetchAllCountries();
+//        ScreenPrinter screenPrinter = new ScreenPrinter(countries);
+//        Prompter prompter = new Prompter(countries, screenPrinter);
+        Processor processor = new Processor(sessionFactory);
         processor.run();
 
         // TODO: not sure if this is the right place to close the session factory
         sessionFactory.close();
     }
 
-    // TODO: implement this method, return an ArrayList of countries from the database
-    @SuppressWarnings("unchecked")
-    private static List<Country> fetchAllCountries() {
-        // Open session
-        Session session = sessionFactory.openSession();
-
-        // Create criteria
-        Criteria criteria = session.createCriteria(Country.class);
-
-        // Get a list of contact objects according to the criteria object
-        List<Country> countries = criteria.list();
-        countries.sort((c1, c2) -> c1.getName().compareTo(c2.getName()));
-
-        // Close session
-        session.close();
-
-        return countries;
-    }
+//    @SuppressWarnings("unchecked")
+//    private static List<Country> fetchAllCountries() {
+//        // Open session
+//        Session session = sessionFactory.openSession();
+//
+//        // Create criteria
+//        Criteria criteria = session.createCriteria(Country.class);
+//
+//        // Get a list of contact objects according to the criteria object
+//        List<Country> countries = criteria.list();
+//
+//        // Close session
+//        session.close();
+//
+//        return countries;
+//    }
 }

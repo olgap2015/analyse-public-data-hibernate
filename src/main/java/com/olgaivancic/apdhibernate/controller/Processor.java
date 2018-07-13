@@ -1,8 +1,10 @@
 package com.olgaivancic.apdhibernate.controller;
 
 import com.olgaivancic.apdhibernate.model.Country;
+import com.olgaivancic.apdhibernate.model.Country.CountryBuilder;
 import com.olgaivancic.apdhibernate.view.Prompter;
 import com.olgaivancic.apdhibernate.view.ScreenPrinter;
+import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
@@ -11,22 +13,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Processor {
+    private SessionFactory sessionFactory;
     private List<Country> countries;
     private Prompter prompter;
     private ScreenPrinter screenPrinter;
     private Map<String, String> menu;
-    private SessionFactory sessionFactory;
 
 
-    public Processor(List<Country> countries, Prompter prompter, ScreenPrinter screenPrinter, SessionFactory sessionFactory) {
-        this.countries = countries;
-        this.prompter = prompter;
-        this.screenPrinter = screenPrinter;
-        this.menu = createMenu();
+    public Processor(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
+        this.countries = fetchAllCountries();
+        this.screenPrinter = new ScreenPrinter(sessionFactory);
+        this.prompter = new Prompter(countries, screenPrinter);
+        this.menu = createMenu();
     }
 
-    // TODO: implement this method being the driver of the application
     public void run() {
         // Welcome message
         System.out.println("\nWelcome to the World Bank Database!\n");
@@ -50,10 +51,11 @@ public class Processor {
                         editCountry();
                         break;
                     case "4":
-                        // TODO: add a country to the database
+                        // Add a new country to the database table
+                        addCountry();
                         break;
                     case "5":
-                        // TODO: Delete a country
+                        deleteCountry();
                         break;
                     case "quit":
                         System.out.println("Thanks for using the World Bank Database. Bye!");
@@ -68,8 +70,84 @@ public class Processor {
         } while (!choice.equals("quit"));
     }
 
+    private void deleteCountry() throws IOException {
+        String countryCode = prompter.promptForCountry("delete");
+        Country country = findCountryById(countryCode);
+        delete(country);
+        System.out.println("\nThe country was successfully deleted.\n");
+    }
+
+    private void delete(Country country) {
+        // Open session
+        Session session = sessionFactory.openSession();
+
+        // begin transaction
+        session.beginTransaction();
+
+        // Delete the contact
+        session.delete(country);
+
+        // commit the transaction
+        session.getTransaction().commit();
+
+        // close the session
+        session.close();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Country> fetchAllCountries() {
+        // Open session
+        Session session = sessionFactory.openSession();
+
+        // Create criteria
+        Criteria criteria = session.createCriteria(Country.class);
+
+        // Get a list of contact objects according to the criteria object
+        List<Country> countries = criteria.list();
+        countries.sort((c1, c2) -> c1.getName().compareTo(c2.getName()));
+
+        // Close session
+        session.close();
+
+        return countries;
+    }
+
+    private void addCountry() throws IOException {
+        System.out.println("\nPlease, enter data for each field\n");
+        String countryCode = prompter.promptForNewCountryCode();
+        String countryName = prompter.promptForNewCountryName();
+        Float internetUsers = prompter.promptForNewFloatValue("Internet Users");
+        Float adultLiteracyRate = prompter.promptForNewFloatValue("Adult LiteracyRate");
+        // Push above values into a new Country object
+        Country newCountry = new CountryBuilder(countryName)
+                .withCode(countryCode)
+                .withInternetUsers(internetUsers)
+                .withAdultLiteracyRate(adultLiteracyRate)
+                .build();
+        // Save the country into the database
+        save(newCountry);
+        System.out.println("\nThe country was successfully added to the database.\n");
+    }
+
+    private void save(Country newCountry) {
+        // Open the session
+        Session session = sessionFactory.openSession();
+
+        // Begin a transaction
+        session.beginTransaction();
+
+        // Use the session to save the contact
+        session.save(newCountry);
+
+        // Commit the transaction
+        session.getTransaction().commit();
+
+        // Close the session
+        session.close();
+    }
+
     private void editCountry() throws IOException {
-        String countryCode = prompter.promptForCountry();
+        String countryCode = prompter.promptForCountry("edit");
         Country country = findCountryById(countryCode);
         System.out.println("Here is what we have in the database about this country:\n");
         System.out.println(country.toString());
@@ -83,6 +161,7 @@ public class Processor {
         country.setAdultLiteracyRate(newAdultLiteracyRate);
         // Update the country in the database
         update(country);
+        System.out.println("\nThe country was successfully updated in the database.\n");
     }
 
     private void update(Country country) {
@@ -167,10 +246,9 @@ public class Processor {
 
     private List<Country> findAllCountiesWithoutMissingInternetUsersData() {
         return countries.stream()
-                        .filter(country -> country.getInternetUsers()!= null)
-                        .collect(Collectors.toList());
+                .filter(country -> country.getInternetUsers()!= null)
+                .collect(Collectors.toList());
     }
-    // TODO: fix this method
     // Calculates correlation coefficient
     private double calculateCorCoeff(List<Float> list1, List<Float> list2) {
         double correlationCoefficient = 0;
@@ -223,7 +301,7 @@ public class Processor {
             double dividend = (listSize * sumOfTheMultiplicationList1ToList2) - (sumOfList1 * sumOfList2);
             // Calculate the divider of the correlation formula
             double divider = Math.sqrt((listSize * sumOfSquaresList1 - sumOfList1 * sumOfList1) *
-                            (listSize * sumOfSquaresList2 - sumOfList2 * sumOfList2));
+                    (listSize * sumOfSquaresList2 - sumOfList2 * sumOfList2));
             // Calculate the correlation coefficient
             correlationCoefficient = dividend / divider;
 

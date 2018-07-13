@@ -1,6 +1,9 @@
 package com.olgaivancic.apdhibernate.view;
 
 import com.olgaivancic.apdhibernate.model.Country;
+import org.hibernate.Criteria;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 
 import java.util.List;
 import java.util.Locale;
@@ -8,9 +11,29 @@ import java.util.Map;
 
 public class ScreenPrinter {
     private List<Country> countries;
+    private SessionFactory sessionFactory;
 
-    public ScreenPrinter(List<Country> countries) {
-        this.countries = countries;
+    public ScreenPrinter(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+        this.countries = fetchAllCountries();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Country> fetchAllCountries() {
+        // Open session
+        Session session = sessionFactory.openSession();
+
+        // Create criteria
+        Criteria criteria = session.createCriteria(Country.class);
+
+        // Get a list of contact objects according to the criteria object
+        List<Country> countries = criteria.list();
+        countries.sort((c1, c2) -> c1.getName().compareTo(c2.getName()));
+
+        // Close session
+        session.close();
+
+        return countries;
     }
 
     public void outputMenu(Map<String,String> menu) {
