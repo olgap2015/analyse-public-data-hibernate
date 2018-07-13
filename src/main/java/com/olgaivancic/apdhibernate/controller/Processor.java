@@ -3,8 +3,6 @@ package com.olgaivancic.apdhibernate.controller;
 import com.olgaivancic.apdhibernate.model.Country;
 import com.olgaivancic.apdhibernate.view.Prompter;
 import com.olgaivancic.apdhibernate.view.ScreenPrinter;
-import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
-import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
@@ -40,47 +38,16 @@ public class Processor {
 
                 switch (choice.toLowerCase()) {
                     case "1":
+                        // Output the table view of the database
                         screenPrinter.outputTable();
                         break;
                     case "2":
-                        // TODO: output statistics
-                        // Filter out countries that have null Internet Users value
-                        List<Country> countriesWithPresentInternetUsersData = findAllCountiesWithoutMissingInternetUsersData();
-                        List<Country> countriesWithPresentLiteracyData = findAllCountiesWithoutMissingLiteracyData();
-                        // Find countries with max and min for both indicators
-                        Map<Country, Float> countryWithMinInternetUsers = findCountryWithMinInternetUsers();
-                        Map<Country, Float> countryWithMinLiteracyRate = findCountryWithMinLiteracyRate();
-                        Map<Country, Float> countryWithMaxInternetUsers = findCountryWithMaxInternetUsers();
-                        Map<Country, Float> countryWithMaxLiteracyRate = findCountryWithMaxLiteracyRate();
-
-                        // Output header
-                        System.out.println("\nStatistics based on the data provided in the database\n");
-
-                        // Output minimums
-                        screenPrinter.outputMinOrMax("minimum", "amount of Internet Users", countryWithMinInternetUsers);
-                        screenPrinter.outputMinOrMax("minimum", "Adult Literacy Rate",countryWithMinLiteracyRate);
-
-                        // Output maximums
-                        screenPrinter.outputMinOrMax("maximum", "amount of Internet Users",countryWithMaxInternetUsers);
-                        screenPrinter.outputMinOrMax("maximum", "Adult Literacy Rate",countryWithMaxLiteracyRate);
-                        System.out.println();
-
-                        // Find countries that have all the data
-                        List<Country> countriesWithoutMissingData = findAllCountiesWithoutMissingData();
-
-                        // Form two separate lists with just indicators
-                        List<Float> listOfInternetUsersRates = getListOfInternetUsersRates(countriesWithoutMissingData);
-                        List<Float> listOfLiteracyRates = getListOfLiteracyRates(countriesWithoutMissingData);
-
-                        // Calculate the correlation coefficient
-                        double correlationCoefficient = calculateCorCoeff(listOfInternetUsersRates, listOfLiteracyRates);
-//                        double pearsonCoefficient = calculateCoeffThirdParty(listOfInternetUsersRates, listOfLiteracyRates);
-
-                        // output correlation coefficient
-                        screenPrinter.outputCorrelation(correlationCoefficient);
+                        // Calculate and show statistics
+                        calculateAndShowStatistics();
                         break;
                     case "3":
-                        // TODO: Edit a country in the database
+                        // Edit data for a particular country
+                        editCountry();
                         break;
                     case "4":
                         // TODO: add a country to the database
@@ -99,6 +66,85 @@ public class Processor {
                 System.out.println("Unable to read your input. Please, try again!");
             }
         } while (!choice.equals("quit"));
+    }
+
+    private void editCountry() throws IOException {
+        String countryCode = prompter.promptForCountry();
+        Country country = findCountryById(countryCode);
+        System.out.println("Here is what we have in the database about this country:\n");
+        System.out.println(country.toString());
+        System.out.println("Please, enter new data for each field for this country or retype the old data\n");
+        String newCountryName = prompter.promptForNewCountryName();
+        Float newInternetUsers = prompter.promptForNewFloatValue("Internet Users");
+        Float newAdultLiteracyRate = prompter.promptForNewFloatValue("Adult LiteracyRate");
+        // Set new values for the country
+        country.setName(newCountryName);
+        country.setInternetUsers(newInternetUsers);
+        country.setAdultLiteracyRate(newAdultLiteracyRate);
+        // Update the country in the database
+        update(country);
+    }
+
+    private void update(Country country) {
+        // open the session
+        Session session = sessionFactory.openSession();
+
+        // begin the transaction
+        session.beginTransaction();
+
+        // use the session to update the contact
+        session.update(country);
+
+        // commit the transaction
+        session.getTransaction().commit();
+
+        // close the session
+        session.close();
+    }
+
+    private void calculateAndShowStatistics() {
+        // Filter out countries that have null Internet Users value
+        List<Country> countriesWithPresentInternetUsersData = findAllCountiesWithoutMissingInternetUsersData();
+        List<Country> countriesWithPresentLiteracyData = findAllCountiesWithoutMissingLiteracyData();
+        // Find countries with max and min for both indicators
+        Map<Country, Float> countryWithMinInternetUsers = findCountryWithMinInternetUsers();
+        Map<Country, Float> countryWithMinLiteracyRate = findCountryWithMinLiteracyRate();
+        Map<Country, Float> countryWithMaxInternetUsers = findCountryWithMaxInternetUsers();
+        Map<Country, Float> countryWithMaxLiteracyRate = findCountryWithMaxLiteracyRate();
+
+        // Output header
+        System.out.println("\nStatistics based on the data provided in the database\n");
+
+        // Output minimums
+        screenPrinter.outputMinOrMax("minimum", "amount of Internet Users", countryWithMinInternetUsers);
+        screenPrinter.outputMinOrMax("minimum", "Adult Literacy Rate",countryWithMinLiteracyRate);
+
+        // Output maximums
+        screenPrinter.outputMinOrMax("maximum", "amount of Internet Users",countryWithMaxInternetUsers);
+        screenPrinter.outputMinOrMax("maximum", "Adult Literacy Rate",countryWithMaxLiteracyRate);
+        System.out.println();
+
+        // Find countries that have all the data
+        List<Country> countriesWithoutMissingData = findAllCountiesWithoutMissingData();
+
+        // Form two separate lists with just indicators
+        List<Float> listOfInternetUsersRates = getListOfInternetUsersRates(countriesWithoutMissingData);
+        List<Float> listOfLiteracyRates = getListOfLiteracyRates(countriesWithoutMissingData);
+
+        // Calculate the correlation coefficient
+        double correlationCoefficient = calculateCorCoeff(listOfInternetUsersRates, listOfLiteracyRates);
+//                        double pearsonCoefficient = calculateCoeffThirdParty(listOfInternetUsersRates, listOfLiteracyRates);
+
+        // output correlation coefficient
+        screenPrinter.outputCorrelation(correlationCoefficient);
+    }
+
+    // Returns a country from a database based on the unique country id
+    private Country findCountryById(String countryCode) {
+        return countries.stream()
+                .filter(country -> country.getCode().equals(countryCode))
+                .findFirst()
+                .orElseThrow(com.olgaivancic.apdhibernate.controller.NotFoundException::new);
     }
 
 //     Calculates the coefficient using the third party Apache Commons library

@@ -48,6 +48,7 @@ public class Application {
 
         // Get a list of contact objects according to the criteria object
         List<Country> countries = criteria.list();
+        countries.sort((c1, c2) -> c1.getName().compareTo(c2.getName()));
 
         // Close session
         session.close();

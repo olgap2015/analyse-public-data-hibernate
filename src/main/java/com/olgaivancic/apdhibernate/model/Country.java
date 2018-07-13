@@ -63,12 +63,24 @@ public class Country {
 
     @Override
     public String toString() {
-        return "Country{" +
-                "code='" + code + '\'' +
-                ", name='" + name + '\'' +
-                ", internetUsers=" + internetUsers +
-                ", adultLiteracyRate=" + adultLiteracyRate +
-                '}';
+        String formattedInternetUsers = "";
+        String formattedAdultLiteracyRate = "";
+
+        if (internetUsers == null) {
+            formattedInternetUsers = "--";
+        } else {
+            formattedInternetUsers = String.format("%.2f", internetUsers);
+        }
+
+        if (adultLiteracyRate == null) {
+            formattedAdultLiteracyRate = "--";
+        } else {
+            formattedAdultLiteracyRate = String.format("%.2f", adultLiteracyRate);
+        }
+        return "Country code: " + code + ",\n" +
+                "Country name: " + name + ",\n" +
+                "Amount of Internet users per 100: " + formattedInternetUsers + ",\n" +
+                "Adult literacy rate (per 100 people): " + formattedAdultLiteracyRate + ".\n";
     }
 
     public static class CountryBuilder {
