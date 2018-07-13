@@ -212,7 +212,7 @@ public class Processor {
 
         // Calculate the correlation coefficient
         double correlationCoefficient = calculateCorCoeff(listOfInternetUsersRates, listOfLiteracyRates);
-//                        double pearsonCoefficient = calculateCoeffThirdParty(listOfInternetUsersRates, listOfLiteracyRates);
+//      double pearsonCoefficient = calculateCoeffThirdParty(listOfInternetUsersRates, listOfLiteracyRates);
 
         // output correlation coefficient
         screenPrinter.outputCorrelation(correlationCoefficient);
