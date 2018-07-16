@@ -20,17 +20,19 @@ public class Processor {
     private Map<String, String> menu;
 
 
-    public Processor(SessionFactory sessionFactory) {
+    public Processor(SessionFactory sessionFactory, ScreenPrinter screenPrinter, Prompter prompter) {
         this.sessionFactory = sessionFactory;
-        this.countries = fetchAllCountries();
-        this.screenPrinter = new ScreenPrinter(sessionFactory);
-        this.prompter = new Prompter(countries, screenPrinter);
+        this.countries = new ArrayList<>();
+        this.screenPrinter = screenPrinter;
+        this.prompter = prompter;
         this.menu = createMenu();
     }
 
     public void run() {
         // Welcome message
         System.out.println("\nWelcome to the World Bank Database!\n");
+
+        fetchAllCountries();
 
         String choice = "";
         do {
@@ -40,7 +42,7 @@ public class Processor {
                 switch (choice.toLowerCase()) {
                     case "1":
                         // Output the table view of the database
-                        screenPrinter.outputTable();
+                        screenPrinter.outputTable(countries);
                         break;
                     case "2":
                         // Calculate and show statistics
@@ -49,13 +51,16 @@ public class Processor {
                     case "3":
                         // Edit data for a particular country
                         editCountry();
+                        fetchAllCountries();
                         break;
                     case "4":
                         // Add a new country to the database table
                         addCountry();
+                        fetchAllCountries();
                         break;
                     case "5":
                         deleteCountry();
+                        fetchAllCountries();
                         break;
                     case "quit":
                         System.out.println("Thanks for using the World Bank Database. Bye!");
@@ -71,7 +76,7 @@ public class Processor {
     }
 
     private void deleteCountry() throws IOException {
-        String countryCode = prompter.promptForCountry("delete");
+        String countryCode = prompter.promptForCountry("delete", countries);
         Country country = findCountryById(countryCode);
         delete(country);
         System.out.println("\nThe country was successfully deleted.\n");
@@ -95,7 +100,8 @@ public class Processor {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Country> fetchAllCountries() {
+//    private List<Country> fetchAllCountries() {
+    private void fetchAllCountries() {
         // Open session
         Session session = sessionFactory.openSession();
 
@@ -103,13 +109,13 @@ public class Processor {
         Criteria criteria = session.createCriteria(Country.class);
 
         // Get a list of contact objects according to the criteria object
-        List<Country> countries = criteria.list();
+        countries = criteria.list();
         countries.sort((c1, c2) -> c1.getName().compareTo(c2.getName()));
 
         // Close session
         session.close();
 
-        return countries;
+//        return countries;
     }
 
     private void addCountry() throws IOException {
@@ -147,7 +153,7 @@ public class Processor {
     }
 
     private void editCountry() throws IOException {
-        String countryCode = prompter.promptForCountry("edit");
+        String countryCode = prompter.promptForCountry("edit", countries);
         Country country = findCountryById(countryCode);
         System.out.println("Here is what we have in the database about this country:\n");
         System.out.println(country.toString());
@@ -182,9 +188,6 @@ public class Processor {
     }
 
     private void calculateAndShowStatistics() {
-        // Filter out countries that have null Internet Users value
-        List<Country> countriesWithPresentInternetUsersData = findAllCountiesWithoutMissingInternetUsersData();
-        List<Country> countriesWithPresentLiteracyData = findAllCountiesWithoutMissingLiteracyData();
         // Find countries with max and min for both indicators
         Map<Country, Float> countryWithMinInternetUsers = findCountryWithMinInternetUsers();
         Map<Country, Float> countryWithMinLiteracyRate = findCountryWithMinLiteracyRate();
@@ -238,13 +241,13 @@ public class Processor {
 //        return corr;
 //    }
 
-    private List<Country> findAllCountiesWithoutMissingLiteracyData() {
+    private List<Country> findAllCountriesWithoutMissingLiteracyData() {
         return countries.stream()
                 .filter(country -> country.getAdultLiteracyRate()!= null)
                 .collect(Collectors.toList());
     }
 
-    private List<Country> findAllCountiesWithoutMissingInternetUsersData() {
+    private List<Country> findAllCountriesWithoutMissingInternetUsersData() {
         return countries.stream()
                 .filter(country -> country.getInternetUsers()!= null)
                 .collect(Collectors.toList());
@@ -269,32 +272,34 @@ public class Processor {
 
             List<Float> squaresOfElementsList1 = new ArrayList<>();
             float sumOfSquaresList1 = 0;
-            for(int i = 0; i < list1.size(); i++) {
-                // Square elements of list1
-                squaresOfElementsList1.add(list1.get(i) * list1.get(i));
+            for(float element: list1) {
+                // Square elements of list2
+                float squareOfElements = element * element;
+                squaresOfElementsList1.add(squareOfElements);
                 // Sum up the elements of the resulting list
-                sumOfSquaresList1 = sumOfSquaresList1 + squaresOfElementsList1.get(i);
+                sumOfSquaresList1 = sumOfSquaresList1 + squareOfElements;
             }
 
             List<Float> squaresOfElementsList2 = new ArrayList<>();
             float sumOfSquaresList2 = 0;
-            for(int i = 0; i < list2.size(); i++) {
+            for(float element: list2) {
                 // Square elements of list2
-                squaresOfElementsList2.add(list2.get(i) * list2.get(i));
+                float squareOfElements = element * element;
+                squaresOfElementsList2.add(squareOfElements);
                 // Sum up the elements of the resulting list
-                sumOfSquaresList2 = sumOfSquaresList2 + squaresOfElementsList2.get(i);
+                sumOfSquaresList2 = sumOfSquaresList2 + squareOfElements;
             }
 
             // Sum of the elements of list 1
             float sumOfList1 = 0;
-            for(int i = 0; i < list1.size(); i++) {
-                sumOfList1 = sumOfList1 + list1.get(i);
+            for (float element : list1) {
+                sumOfList1 = sumOfList1 + element;
             }
 
             // Sum of the elements of list 2
             float sumOfList2 = 0;
-            for(int i = 0; i < list2.size(); i++) {
-                sumOfList2 = sumOfList2 + list2.get(i);
+            for (float element : list2) {
+                sumOfList2 = sumOfList2 + element;
             }
 
             // Calculate the dividend of the correlation formula
@@ -311,13 +316,13 @@ public class Processor {
 
     private static List<Float> getListOfLiteracyRates(List<Country> countries) {
         List<Float> listOfLiteracyRates = new ArrayList<>();
-        countries.stream().forEach(country -> listOfLiteracyRates.add(country.getAdultLiteracyRate()));
+        countries.forEach(country -> listOfLiteracyRates.add(country.getAdultLiteracyRate()));
         return listOfLiteracyRates;
     }
 
     private static List<Float> getListOfInternetUsersRates(List<Country> countries) {
         List<Float> listOfInternetUsersRates = new ArrayList<>();
-        countries.stream().forEach(country -> listOfInternetUsersRates.add(country.getInternetUsers()));
+        countries.forEach(country -> listOfInternetUsersRates.add(country.getInternetUsers()));
         return listOfInternetUsersRates;
     }
 
@@ -329,46 +334,33 @@ public class Processor {
     private Map<Country, Float> findCountryWithMinLiteracyRate() {
         Map<Country, Float> map = new HashMap<>();
         Comparator<Country> literacyRateComparator = Comparator.comparing(Country::getAdultLiteracyRate);
-        List<Country> countries = findAllCountiesWithoutMissingLiteracyData();
+        List<Country> countries = findAllCountriesWithoutMissingLiteracyData();
         Country country = countries.stream().min(literacyRateComparator).get();
         String countryCode = country.getCode();
         // Add country and its rate to the map
-        countries.forEach(country1 -> {
-            if(country1.getCode().equals(countryCode)) {
-                map.put(country1, country1.getInternetUsers());
-            }
-        });
+        map.put(country, country.getAdultLiteracyRate());
         return map;
     }
 
     private Map<Country, Float> findCountryWithMaxLiteracyRate() {
         Map<Country, Float> map = new HashMap<>();
         Comparator<Country> literacyRateComparator = Comparator.comparing(Country::getAdultLiteracyRate);
-        List<Country> countries = findAllCountiesWithoutMissingLiteracyData();
+        List<Country> countries = findAllCountriesWithoutMissingLiteracyData();
         Country country = countries.stream().max(literacyRateComparator).get();
         String countryCode = country.getCode();
         // Add country and its rate to the map
-        countries.forEach(country1 -> {
-            if(country1.getCode().equals(countryCode)) {
-                map.put(country1, country1.getInternetUsers());
-            }
-        });
+        map.put(country, country.getAdultLiteracyRate());
         return map;
     }
 
     private Map<Country, Float> findCountryWithMinInternetUsers() {
         Map<Country, Float> map = new HashMap<>();
         Comparator<Country> internetUsersComparator = Comparator.comparing(Country::getInternetUsers);
-        List<Country> countries = findAllCountiesWithoutMissingInternetUsersData();
+        List<Country> countries = findAllCountriesWithoutMissingInternetUsersData();
         Country country = countries.stream().min(internetUsersComparator).get();
         String countryCode = country.getCode();
-        float rate = 0;
         // Add country and its rate to the map
-        countries.forEach(country1 -> {
-            if(country1.getCode().equals(countryCode)) {
-                map.put(country1, country1.getInternetUsers());
-            }
-        });
+        map.put(country, country.getInternetUsers());
         return map;
     }
 
@@ -376,18 +368,13 @@ public class Processor {
         Map<Country, Float> map = new HashMap<>();
         Comparator<Country> internetUsersComparator = Comparator.comparing(Country::getInternetUsers);
         // List of coutries without missing Internet Users Data
-        List<Country> countries = findAllCountiesWithoutMissingInternetUsersData();
+        List<Country> countries = findAllCountriesWithoutMissingInternetUsersData();
         // Country with the max amount of Internet Users
         Country country = countries.stream().max(internetUsersComparator).get();
         // Get the code of that country
         String countryCode = country.getCode();
-        float rate = 0;
         // Add country and its rate to the map
-        countries.forEach(country1 -> {
-            if(country1.getCode().equals(countryCode)) {
-                map.put(country1, country1.getInternetUsers());
-            }
-        });
+        map.put(country, country.getInternetUsers());
         return map;
     }
 

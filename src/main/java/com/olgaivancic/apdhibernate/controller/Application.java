@@ -1,5 +1,7 @@
 package com.olgaivancic.apdhibernate.controller;
 
+import com.olgaivancic.apdhibernate.view.Prompter;
+import com.olgaivancic.apdhibernate.view.ScreenPrinter;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -16,8 +18,9 @@ public class Application {
     }
 
     public static void main(String[] args) {
-
-        Processor processor = new Processor(sessionFactory);
+        ScreenPrinter screenPrinter = new ScreenPrinter();
+        Prompter prompter = new Prompter(screenPrinter);
+        Processor processor = new Processor(sessionFactory, screenPrinter, prompter);
         processor.run();
 
         sessionFactory.close();

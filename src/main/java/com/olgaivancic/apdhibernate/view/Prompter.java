@@ -15,8 +15,8 @@ public class Prompter {
     private ScreenPrinter screenPrinter;
     private BufferedReader reader;
 
-    public Prompter(List<Country> countries, ScreenPrinter screenPrinter) {
-        this.countries = countries;
+    public Prompter(ScreenPrinter screenPrinter) {
+        this.countries = new ArrayList<>();
         this.screenPrinter = screenPrinter;
         this.reader = new BufferedReader(new InputStreamReader(System.in));
 
@@ -31,7 +31,7 @@ public class Prompter {
         return choice;
     }
 
-    public String promptForCountry(String action) throws IOException {
+    public String promptForCountry(String action, List<Country> countries) throws IOException {
         String countryCode = "";
         List<String> listOfCountryCodes = new ArrayList<>();
         countries.forEach(country -> {
